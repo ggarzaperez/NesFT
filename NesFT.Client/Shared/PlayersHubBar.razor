@@ -44,7 +44,6 @@
 
         hubConnection.On<string>("PlayerOnline", async (string email) =>
         {
-            Console.WriteLine("Player Online: " + email);
             SetPlayerOnlineStatus(email, true);
             AvailablePlayersContext.PlayersHaveChanged.Invoke();
             await sweetAlert2.Toast(new { title = $"{email} Online", icon = "success"});
@@ -52,7 +51,6 @@
 
         hubConnection.On<string>("PlayerOffline", async (string email) =>
         {
-            Console.WriteLine("Player Offline: " + email);
             SetPlayerOnlineStatus(email, false);
             AvailablePlayersContext.PlayersHaveChanged.Invoke();
             await sweetAlert2.Toast(new { title = $"{email} Offline", icon = "error"});
@@ -77,7 +75,6 @@
         if (_players is not null)
         {
             AvailablePlayersContext.players.AddRange(_players);
-            Console.WriteLine("_players are not null: " + AvailablePlayersContext.players.Count);
         }
     }
 

@@ -1,0 +1,14 @@
+﻿@if(game is not null) {
+    <div class="card mb-4" style="width: 18rem;">
+        <img src="/images/games/@game.ImageName" class="card-img-top" alt="@game.ImageName">
+        <div class="card-body">
+            <h5 class="card-title text-center text-dark">@game.Title</h5>
+            <p class="card-text text-secondary text-center mt-3">@game.YearPublished</p>
+            <button class="nes-btn is-error d-block" style="margin: 0 auto;">Challenge!</button>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public Game game { get; set; }
+}

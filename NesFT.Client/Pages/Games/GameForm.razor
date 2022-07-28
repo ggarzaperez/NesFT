@@ -36,10 +36,7 @@
 
     public async Task CreateGame()
     {
-        Console.WriteLine($"{game.Title} {game.YearPublished} {game.ImageName}");
-
         var response = await gamesService.Upsert(game);
-
         responseError = response.IsSuccessStatusCode;
     }
 }

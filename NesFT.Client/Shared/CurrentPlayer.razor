@@ -32,7 +32,6 @@
 
                 if(player is not null)
                 {
-                    Console.WriteLine("Known Player: " + player.ToString());
                     stateManager.CurrentPlayer = player;
                 }
                 else
@@ -48,7 +47,6 @@
                     if(response.IsSuccessStatusCode)
                     {
                         stateManager.CurrentPlayer = newPlayer;
-                        Console.WriteLine("New Player: " + newPlayer.ToString());
                     }
                     else
                     {

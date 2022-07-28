@@ -3,6 +3,7 @@ using NesFT.Models;
 using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.AspNetCore.SignalR;
 using NesFT.Data.Repositories;
+using NesFt.Api.Hubs;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -42,16 +43,17 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 app.MapHub<PlayersHub>("/playershub");
-
+app.MapHub<GamesHub>("/gameshub");
 
 app.MapGet("/games", (GamesRepository gameRepo) =>
 {
     return gameRepo.Get();
 });
 
-app.MapPut("/games", (Game newGame, GamesRepository gamesRepo) =>
+app.MapPut("/games", async (Game newGame, GamesRepository gamesRepo, IHubContext<GamesHub> hubContext) =>
 {
     gamesRepo.Upsert(newGame);
+    await hubContext.Clients.All.SendAsync("GameCreated", newGame);
     return newGame;
 });
 

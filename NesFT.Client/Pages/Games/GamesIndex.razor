@@ -1,6 +1,27 @@
 ﻿@page "/games"
 
 @inject GamesService gamesService
+@using Microsoft.AspNetCore.SignalR.Client
+
+@inject SweetAlert2 sweetAlert2
+
+@implements IAsyncDisposable
+
+@if(refreshNeeded)
+{
+    <div class="d-flex flex-row align-items-center">
+        <section class="message-list">
+            <section class="message -left">
+                <div class="nes-balloon from-left">
+                    <p>There are new games available!</p>
+                    <div class="d-flex justify-content-end">
+                        <button class="nes-btn is-primary" @onclick="RefreshGames">Refresh</button>
+                    </div>
+                </div>
+            </section>
+        </section>
+    </div>
+}
 
 <div class="d-flex justify-content-between align-items-center">
     <h1 class="mb-4">Games<i class="nes-logo"></i></h1>
@@ -10,28 +31,48 @@
 <div class="nes-container is-dark">
 @if(availableGames != null) {
     <div class="d-flex justify-content-evenly flex-wrap">
-
-    @foreach(var game in availableGames)
-    {
-        <div class="card mb-4" style="width: 18rem;">
-          <img src="/images/games/@game.ImageName" class="card-img-top" alt="@game.ImageName">
-          <div class="card-body">
-            <h5 class="card-title text-center text-dark">@game.Title</h5>
-            <p class="card-text text-secondary text-center mt-3">@game.YearPublished</p>
-            <button class="nes-btn is-error d-block" style="margin: 0 auto;">Challenge!</button>
-          </div>
-        </div>
-    }
+        @foreach(var game in availableGames)
+        {
+            <GameCard game=@game />
+        }
     </div>
 }
 </div>
 
-
 @code {
     private List<Game>? availableGames;
+    private bool refreshNeeded;
+    private HubConnection? hubConnection;
 
     protected override async Task OnInitializedAsync()
     {
+        await RefreshGames();
+
+        hubConnection = new HubConnectionBuilder()
+           .WithUrl("https://localhost:8675/gameshub")
+           .Build();
+
+        hubConnection.On<Game>("GameCreated", async (Game game) =>
+        {
+            refreshNeeded = true;
+            await InvokeAsync(StateHasChanged);
+            await sweetAlert2.Toast(new { title = $"{game.Title} Created", icon = "success"});
+        });
+
+        await hubConnection.StartAsync();
+    }
+
+    private async Task RefreshGames()
+    {
         availableGames = await gamesService.Get();
+        refreshNeeded = false;
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (hubConnection is not null)
+        {
+            await hubConnection.DisposeAsync();
+        }
     }
 }
