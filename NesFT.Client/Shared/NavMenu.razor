@@ -1,0 +1,21 @@
+﻿<header class="d-flex flex-wrap justify-content-center py-3 border-bottom">
+    <a href="/" class="d-flex align-items-center col-md-3 mb-2 mb-md-0 text-dark text-decoration-none">
+        <img src="images/ness_icon_gif.gif" style="width: 50px" />
+        <span>N(ES)FT!</span>
+    </a>
+    <ul class="nav col-12 col-md-auto mb-2 justify-content-center mb-md-0">
+        <li><a href="#" class="nav-link px-2 link-secondary">Home</a></li>
+        <li><a href="/games" class="nav-link px-2 link-dark">Games</a></li>
+        <li><a href="/players" class="nav-link px-2 link-dark">Players</a></li>
+        <li><a href="#" class="nav-link px-2 link-dark">Challenges</a></li>
+      </ul>
+    <div class="col-md-3 text-end">
+        <LoginDisplay/>
+    </div>
+</header>
+
+<AuthorizeView>
+    <Authorized>
+        <PlayersHubBar />
+    </Authorized>
+</AuthorizeView>

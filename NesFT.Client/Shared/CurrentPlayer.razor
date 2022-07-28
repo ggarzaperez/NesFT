@@ -1,0 +1,61 @@
+﻿@inject StateManager stateManager
+@inject PlayersService playersService
+
+<AuthorizeView>
+    <Authorized>
+        <p class="m-0 align-self-center mr-3">Welcome, @stateManager.CurrentPlayer?.Nickname!</p>
+    </Authorized>
+</AuthorizeView>
+
+
+@code {
+    [CascadingParameter] public Task<AuthenticationState> AuthState { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthState;
+
+        if(authState.User.Identity.IsAuthenticated)
+        {
+            var email = authState.User.Claims.FirstOrDefault(c => c.Type == "preferred_username")?.Value;
+            if(email != null)
+            {
+                Player? player = null;
+
+                try
+                {
+                    player = await playersService.GetPlayerByEmail(email);
+                } catch
+                {
+                    //TODO: Check for NotFound, which is expected, otherwise, throw
+                }
+
+                if(player is not null)
+                {
+                    Console.WriteLine("Known Player: " + player.ToString());
+                    stateManager.CurrentPlayer = player;
+                }
+                else
+                {
+                    var newPlayer = new Player()
+                        {
+                            Email = email,
+                            Nickname = authState.User.Identity.Name ?? "Pick a Nickname in Settings"
+                        };
+
+                    var response = await playersService.UpsertPlayer(newPlayer);
+
+                    if(response.IsSuccessStatusCode)
+                    {
+                        stateManager.CurrentPlayer = newPlayer;
+                        Console.WriteLine("New Player: " + newPlayer.ToString());
+                    }
+                    else
+                    {
+                        Console.WriteLine("Could not create player profile for signed in user...");
+                    }
+                }
+            }
+        }
+    }
+}

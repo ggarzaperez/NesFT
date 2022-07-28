@@ -1,0 +1,25 @@
+﻿@inherits LayoutComponentBase
+@using Microsoft.AspNetCore.SignalR.Client
+@inject NavigationManager NavigationManager
+@inject PlayersService playersService
+
+<CascadingValue Value="@AvailablePlayersContext">
+    <NavMenu />
+
+    <main>
+        <div class="container px-2 mt-5">
+            @Body
+        </div>
+    </main>
+</CascadingValue>
+
+@code {
+    [CascadingParameter] public Task<AuthenticationState> AuthState { get; set; }
+
+    public AvailablePlayersContext AvailablePlayersContext { get; set; } = new();
+
+    protected override void OnInitialized()
+    {
+        AvailablePlayersContext.PlayersHaveChanged += () => StateHasChanged();
+    }
+}

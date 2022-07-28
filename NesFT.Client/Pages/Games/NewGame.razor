@@ -1,0 +1,11 @@
+﻿@page "/games/new"
+
+@attribute [Authorize]
+
+<h3>New Game</h3>
+
+<GameForm game="@newGame"></GameForm>
+
+@code {
+    private Game newGame { get; set; } = new Game { Title = "Your title here", YearPublished = 1980 };
+}

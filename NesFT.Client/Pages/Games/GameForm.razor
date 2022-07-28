@@ -1,0 +1,45 @@
+﻿@inject GamesService gamesService
+
+<div class="nes-container">
+    @if(responseError is not null)
+    {
+        @if(Convert.ToBoolean(responseError))
+        {
+            <span class="nes-text is-success">Game created successfully!</span>
+        }
+        else
+        {
+            <span class="nes-text is-error">Error while creating game!</span>
+        }
+    }
+
+    <form @onsubmit="CreateGame">
+        <div class="mb-3">
+            <label for="title">Title</label>
+            <input type="text"  @bind="game.Title"/>
+        </div>
+        <div class="mb-3">
+            <label for="yearPublished">Year Published</label>
+            <input type="text" @bind="game.YearPublished"/>
+        </div>
+        <div class="mb-3">
+            <label for="imageName">Image Name</label>
+            <input type="text" @bind="game.ImageName"/>
+        </div>
+
+        <button class="nes-btn is-primary">Create</button>
+    </form>
+</div>
+    @code {
+    [Parameter] public Game game { get; set; } = new();
+    private bool? responseError = null;
+
+    public async Task CreateGame()
+    {
+        Console.WriteLine($"{game.Title} {game.YearPublished} {game.ImageName}");
+
+        var response = await gamesService.Upsert(game);
+
+        responseError = response.IsSuccessStatusCode;
+    }
+}

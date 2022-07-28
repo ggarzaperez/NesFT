@@ -1,0 +1,152 @@
+﻿@using Microsoft.AspNetCore.SignalR.Client
+
+@inject NavigationManager NavigationManager
+@inject PlayersService playersService
+@inject StateManager stateManager
+@inject SweetAlert2 sweetAlert2
+
+@implements IAsyncDisposable
+
+<AuthorizeView>
+    <Authorized>
+        <header class="nes-container d-flex flex-wrap justify-content-center border-bottom is-dark" >
+            <CurrentPlayer />
+
+            @if(AvailablePlayersContext.players is not null && stateManager.CurrentPlayer is not null)
+            {
+                <button class="nes-btn mx-3" @onclick="@ToggleOnlineStatus">@GetCurrentPlayerOnlineStatus()</button>
+            }
+        </header>
+    </Authorized>
+</AuthorizeView>
+
+@code {
+
+    [CascadingParameter] public Task<AuthenticationState> AuthState { get; set; }
+    [CascadingParameter] protected AvailablePlayersContext AvailablePlayersContext { get; set; }
+
+    private HubConnection? hubConnection;
+
+    private void SetPlayerOnlineStatus(string email, bool onlineStatus)
+    {
+        var onlinePlayer = AvailablePlayersContext.players?.Find(p => p.Email == email);
+        if(onlinePlayer is not null)
+        {
+            onlinePlayer.Online = onlineStatus;
+        } 
+    }
+
+    private async Task InitializePlayersHub()
+    {
+        hubConnection = new HubConnectionBuilder()
+           .WithUrl("https://localhost:8675/playershub")
+           .Build();
+
+        hubConnection.On<string>("PlayerOnline", async (string email) =>
+        {
+            Console.WriteLine("Player Online: " + email);
+            SetPlayerOnlineStatus(email, true);
+            AvailablePlayersContext.PlayersHaveChanged.Invoke();
+            await sweetAlert2.Toast(new { title = $"{email} Online", icon = "success"});
+        });
+
+        hubConnection.On<string>("PlayerOffline", async (string email) =>
+        {
+            Console.WriteLine("Player Offline: " + email);
+            SetPlayerOnlineStatus(email, false);
+            AvailablePlayersContext.PlayersHaveChanged.Invoke();
+            await sweetAlert2.Toast(new { title = $"{email} Offline", icon = "error"});
+        });
+
+        hubConnection.On<Player>("PlayerCreated", async (Player player) =>
+        {
+            if(!Convert.ToBoolean(AvailablePlayersContext.players?.Exists(p => p.Email == player.Email)))
+            {
+                AvailablePlayersContext.players?.Add(player);
+                AvailablePlayersContext.PlayersHaveChanged.Invoke();
+                await sweetAlert2.Toast(new { title = $"{player.Email} Joined!", icon = "info"});
+            }
+        });
+
+        await hubConnection.StartAsync();
+    }
+
+    private async Task InitializeAvailablePlayers()
+    {
+        var _players = await playersService.Get();
+        if (_players is not null)
+        {
+            AvailablePlayersContext.players.AddRange(_players);
+            Console.WriteLine("_players are not null: " + AvailablePlayersContext.players.Count);
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await InitializePlayersHub();
+        await InitializeAvailablePlayers();
+
+        AvailablePlayersContext.PlayersHaveChanged.Invoke();
+    }
+
+    private Player? GetCurrentPlayer()
+    {
+        return AvailablePlayersContext.players?.Find(p => p.Email == stateManager.CurrentPlayer.Email);
+    }
+
+    private string GetCurrentPlayerOnlineStatus()
+    {
+        var onlineStatus = GetCurrentPlayer()?.Online;
+
+        if (onlineStatus is null) return "Unknown";
+
+        return Convert.ToBoolean(onlineStatus) ? "Online" : "Offline";
+    }
+
+    private async Task ToggleOnlineStatus()
+    {
+        var currentPlayer = GetCurrentPlayer();
+
+        if (currentPlayer is not null)
+        {
+            currentPlayer.Online = !currentPlayer.Online;
+            if(currentPlayer.Online)
+            {
+                await Connect();
+            }
+            else
+            {
+                await Disconnect();
+            }
+        }
+
+        AvailablePlayersContext.PlayersHaveChanged.Invoke();
+    }
+
+    private async Task Connect()
+    {
+        if (hubConnection is not null)
+            {
+                await hubConnection.SendAsync("Connect", stateManager.CurrentPlayer.Email);
+            }
+    }
+
+    private async Task Disconnect()
+    {
+        if (hubConnection is not null)
+            {
+                await hubConnection.SendAsync("Disconnect", stateManager.CurrentPlayer.Email);
+            }
+    }
+
+    public bool IsConnected =>
+        hubConnection?.State == HubConnectionState.Connected;
+
+    public async ValueTask DisposeAsync()
+    {
+        if (hubConnection is not null)
+        {
+            await hubConnection.DisposeAsync();
+        }
+    }
+}

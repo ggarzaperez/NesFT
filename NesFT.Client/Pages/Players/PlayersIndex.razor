@@ -1,0 +1,49 @@
+﻿@page "/players"
+
+@attribute [Authorize]
+
+<div class="d-flex justify-content-between align-items-center">
+    <h1 class="mb-4">Players</h1>
+</div>
+
+<div class="nes-container is-dark">
+    @if(AvailablePlayersContext.players is not null) {
+        <div class="d-flex justify-content-evenly flex-wrap">
+
+        @foreach(var player in AvailablePlayersContext.players)
+        {
+            <div class="card mb-4" style="width: 100%;">
+              <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <h5 class="card-title text-dark">@player.Nickname</h5>
+                    @if(@player.Online) 
+                    {
+                        <a href="#" class="nes-badge">
+                            <span class="is-success">Online</span>
+                        </a>
+                    } 
+                    else
+                    {
+                        <a href="#" class="nes-badge">
+                            <span class="is-error">Offline</span>
+                        </a>       
+                    }
+                </div>
+                <p class="card-text text-secondary mt-3">@player.Email</p>
+                @if (@player.Online)
+                {
+                    <div class="d-flex justify-content-end">
+                        <button class="nes-btn is-warning d-block">Challenge!</button>
+                    </div>
+                }
+              </div>
+            </div>
+        }
+        </div>
+    }
+</div>
+
+
+@code {
+    [CascadingParameter] protected AvailablePlayersContext AvailablePlayersContext { get; set; }
+}

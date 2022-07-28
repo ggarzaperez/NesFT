@@ -1,0 +1,34 @@
+﻿@page "/admin/users"
+
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.Graph
+@using System.Text.Json;
+
+@attribute [Authorize]
+
+@inject GraphServiceClient GraphClient
+
+<h3 class="mb-3">AAD Users</h3>
+
+@if (users != null)
+{
+    <div class="nes-container">
+        <ul>
+            @foreach(var _user in users)
+            {
+                <li class="mb-2">@_user.DisplayName</li>
+            }
+        </ul>
+    </div>
+}
+
+@code {
+    private IGraphServiceUsersCollectionPage? users;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var allUsersRequest = GraphClient.Users.Request();
+        users = await allUsersRequest.GetAsync();
+    }
+}
+
